@@ -7,38 +7,58 @@
     android:orientation="vertical"
     tools:context="com.acode.diagramline.MainActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#ffffff"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/tv"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:text="fsd"
-            android:textColor="#333333"
-            android:textSize="18sp" />
+            android:layout_height="match_parent"
+            android:background="@color/cffffff"
+            android:orientation="vertical">
 
-        <com.acode.diagram.DiagramView
-            android:id="@+id/diagramView"
-            android:layout_width="match_parent"
-            android:layout_height="211dp"
-            android:layout_centerInParent="true"
-            android:layout_marginLeft="14dp"
-            android:layout_marginRight="14dp"
-            android:background="#ffffff" />
-    </LinearLayout>
-    <Button
-        android:id="@+id/btn"
-        android:text="更新"
-        android:layout_width="match_parent"
-        android:layout_height="50dp" />
-    <com.acode.diagram.DiagramLineView
-        android:background="#ffffff"
-        android:id="@+id/diagramLineView"
-        android:layout_width="match_parent"
-        android:layout_height="211dp" />
+            <Button
+                android:id="@+id/btn2"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="滚动折线图" />
+
+            <com.acode.diagram.DiagramHorizerScrollView
+                android:id="@+id/diagramHSView"
+                android:layout_width="match_parent"
+                android:layout_height="211dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="#ffffff" />
+
+            <Button
+                android:id="@+id/btn1"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="滑动折线图" />
+
+            <com.acode.diagram.DiagramView
+                android:id="@+id/diagramView"
+                android:layout_width="match_parent"
+                android:layout_height="211dp"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="#ffffff" />
+
+            <Button
+                android:id="@+id/btn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="更新" />
+
+            <com.acode.diagram.DiagramLineView
+                android:id="@+id/diagramLineView"
+                android:layout_width="match_parent"
+                android:layout_height="211dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="#ffffff" />
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

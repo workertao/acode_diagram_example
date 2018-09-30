@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.Rect;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -17,7 +18,10 @@ import android.view.View;
 
 import com.acode.diagram.bean.DiagramBean;
 import com.acode.diagram.data.Config;
+import com.acode.diagram.listener.OnItemClickListener;
+import com.acode.diagram.listener.OnSizeChangeListener;
 import com.acode.diagram.utils.DimenUtils;
+import com.acode.diagram.utils.DisplayUtils;
 
 import java.util.ArrayList;
 
@@ -77,6 +81,14 @@ public class DiagramLineView extends View {
     //数据源
     private ArrayList<DiagramBean> diagramBeans;
 
+    //Y轴每个点的间隔
+    private int yInterval;
+
+    //是否可以滑动
+    private boolean isScroll;
+
+    //监听控件的宽高变化
+    private OnSizeChangeListener onSizeChangeListener;
 
     public DiagramLineView(Context context) {
         this(context, null);
@@ -90,6 +102,11 @@ public class DiagramLineView extends View {
         super(context, attrs, defStyleAttr);
         this.context = context;
         init();
+    }
+
+    public DiagramLineView setOnSizeChangeListener(OnSizeChangeListener onSizeChangeListener) {
+        this.onSizeChangeListener = onSizeChangeListener;
+        return this;
     }
 
     //初始化
@@ -164,10 +181,12 @@ public class DiagramLineView extends View {
 
     //画线
     private void drawLinePath(Canvas canvas) {
-        path.moveTo(0, diagramBeans.get(0).getDy());
+//        path.moveTo(0, diagramBeans.get(0).getDy());
+        path.moveTo(0, getRelY(0));
         // 连接线
         for (int i = 1; i < diagramBeans.size(); i++) {
-            path.lineTo(getAverWidth() * i, diagramBeans.get(i).getDy());
+//            path.lineTo(getAverWidth() * i, diagramBeans.get(i).getDy());
+            path.lineTo(getAverWidth() * i, getRelY(i));
             pathMeasure.setPath(path, false);
             segent[i - 1] = pathMeasure.getLength();
         }
@@ -180,7 +199,14 @@ public class DiagramLineView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+        if (widthMeasureSpec == 0) {
+            thisWidth = getSAWidth() * (xLength) + ((DimenUtils.dip2px(context, Config.margin) * 2));
+            setMeasuredDimension(thisWidth, getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
+            return;
+        }
+        setMeasuredDimension(
+                getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),
+                getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
     }
 
     @Override
@@ -191,6 +217,10 @@ public class DiagramLineView extends View {
         Log.d(TAG, "w:" + w + "   thisWidth:" + thisWidth);
         thisHeight = h;
         notifyData();
+        if (onSizeChangeListener==null){
+            return;
+        }
+        onSizeChangeListener.onSize();
     }
 
     //reset画笔
@@ -206,13 +236,16 @@ public class DiagramLineView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.translate(DimenUtils.dip2px(context, Config.margin), thisHeight - DimenUtils.dip2px(context, Config.margin));
+        canvas.translate(DimenUtils.dip2px(context, Config.margin + 10), thisHeight - DimenUtils.dip2px(context, Config.margin));
         resetPaint();
         path.reset();
         initPaint();
         initPath();
         //坐标系
         drawXY(canvas);
+        if (diagramBeans == null) {
+            return;
+        }
         //动画
         if (isAnim) {
             drawLinePathForAnim(canvas);
@@ -247,36 +280,38 @@ public class DiagramLineView extends View {
         if (stokeColor != 0 && fillColor == 0) {
             pointPaint.setColor(stokeColor);
             pointPaint.setStyle(Paint.Style.STROKE);
-            canvas.drawCircle(getAverWidth() * i, diagramBeans.get(i).getDy(), 7, pointPaint);
+            canvas.drawCircle(getAverWidth() * i, getRelY(i), 7, pointPaint);
 
             pointPaint.setColor(Color.WHITE);
             pointPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(getAverWidth() * i, diagramBeans.get(i).getDy(), 5, pointPaint);
+            canvas.drawCircle(getAverWidth() * i, getRelY(i), 5, pointPaint);
         }
         //设置实心颜色
         if (stokeColor == 0 && fillColor != 0) {
             pointPaint.setColor(fillColor);
             pointPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(getAverWidth() * i, diagramBeans.get(i).getDy(), 12, pointPaint);
+            canvas.drawCircle(getAverWidth() * i, getRelY(i), 12, pointPaint);
         }
         //设置渐变色
         if (stokeColor != 0 && fillColor != 0) {
             pointPaint.setColor(stokeColor);
             pointPaint.setStyle(Paint.Style.STROKE);
-            canvas.drawCircle(getAverWidth() * i, diagramBeans.get(i).getDy(), 7, pointPaint);
+            canvas.drawCircle(getAverWidth() * i, getRelY(i), 7, pointPaint);
 
             pointPaint.setColor(fillColor);
             pointPaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(getAverWidth() * i, diagramBeans.get(i).getDy(), 5, pointPaint);
+            canvas.drawCircle(getAverWidth() * i, getRelY(i), 5, pointPaint);
         }
     }
 
     //画字
     private void drawText(Canvas canvas, int i) {
-        String text = -diagramBeans.get(i).getDy() + "";
+        //画字还用真是的数据
+        String text = -((int) diagramBeans.get(i).getDy()) + "";
         Rect rect = new Rect();
         yPaint.getTextBounds(text, 0, text.length(), rect);
-        canvas.drawText(text, getAverWidth() * i - 30, diagramBeans.get(i).getDy() - rect.height(), yPaint);
+        //字的位置使用计算的比例来画
+        canvas.drawText(text, getAverWidth() * i, getRelY(i) - rect.height(), yPaint);
     }
 
     //坐标系
@@ -300,13 +335,15 @@ public class DiagramLineView extends View {
             xValue[i] = xLine[i].floatValue();
         }
         canvas.drawLines(xValue, xPaint);
-        //x轴文字
-        for (int i = 0; i < xLength; i++) {
-            canvas.drawText(diagramBeans.get(i).getStrdx(), getAverWidth() * i - 30, 50, yPaint);
+        if (diagramBeans != null) {
+            //x轴文字
+            for (int i = 0; i < xLength; i++) {
+                canvas.drawText(diagramBeans.get(i).getStrdx(), getAverWidth() * i - 30, 50, yPaint);
+            }
         }
         //y轴文字
         for (int i = 0; i < yLength; i++) {
-            canvas.drawText(i * 5 + "", -50, -getAverHeight() * i + 10, yPaint);
+            canvas.drawText(i * yInterval + "", -DimenUtils.dip2px(context, 32), -getAverHeight() * i + 10, yPaint);
         }
         //虚线
         for (int i = 1; i < yLength; i++) {
@@ -316,6 +353,13 @@ public class DiagramLineView extends View {
             path.lineTo(thisWidth, -getAverHeight() * i);
             canvas.drawPath(path, effectPaint);
         }
+    }
+
+    //计算Y轴的点的比例，因为像素太高
+    private float getRelY(int i) {
+        float a = getAverHeight() / yInterval;
+        float b = diagramBeans.get(i).getDy() * a;
+        return b;
     }
 
     //线条动画
@@ -347,6 +391,9 @@ public class DiagramLineView extends View {
 
     //宽度平均值
     public float getAverWidth() {
+        if (isScroll) {
+            return thisWidth / xLength;
+        }
         return thisWidth / (xLength - 1);
     }
 
@@ -377,7 +424,12 @@ public class DiagramLineView extends View {
 
     //是否执行动画
     public void setIsAnim(boolean isAnim) {
-        this.isAnim = isAnim;
+        //用户传的true，并且当前版本>5.0的时候
+        if (isAnim && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            this.isAnim = true;
+        } else {
+            this.isAnim = false;
+        }
     }
 
     //设置数据源
@@ -390,7 +442,6 @@ public class DiagramLineView extends View {
             diagramBeans.get(i).setDy(-diagramBeans.get(i).getDy());
         }
         this.diagramBeans = diagramBeans;
-
     }
 
     //获取数据源
@@ -406,14 +457,71 @@ public class DiagramLineView extends View {
 
     //设置点点颜色 fillColor填充颜色
     public void setFillColor(int fillColor) {
-        this.fillColor =  context.getResources().getColor(fillColor);
+        this.fillColor = context.getResources().getColor(fillColor);
     }
 
     //更新数据
     public void notifyData() {
+        if (diagramBeans == null) {
+            return;
+        }
         initLineData();
         if (isAnim) {
             startAnim();
+        } else {
+            invalidate();
         }
+    }
+
+    //设置Y轴的每个点的间隔
+    public void setYInterval(int yInterval) {
+        this.yInterval = yInterval;
+    }
+
+    public int getyInterval() {
+        return yInterval;
+    }
+
+    //获取将屏幕分成7分后的X轴宽度
+    private int getSAWidth() {
+        int width = DisplayUtils.getDisplayWidth(context);
+        int relWidth = width - (DimenUtils.dip2px(context, Config.margin)) - (DimenUtils.dip2px(context, 14));
+        int sdWidth = relWidth / 7;
+        return sdWidth;
+    }
+
+    //设置是否可以滑动
+    public void setIsScroll(boolean isScroll) {
+        this.isScroll = isScroll;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (onItemClickListener == null) {
+            return false;
+        }
+        if (getData() == null || getData().size() == 0) {
+            return false;
+        }
+        int index = 0;
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (event.getX() > (getAverWidth() / 2)) {
+                    index = (int) (event.getX() / getAverWidth());
+                }
+                if (index>=xLength){
+                    return false;
+                }
+                onItemClickListener.onItemClick(index);
+                break;
+        }
+        return false;
+    }
+
+    public OnItemClickListener onItemClickListener;
+
+    public DiagramLineView setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+        return this;
     }
 }

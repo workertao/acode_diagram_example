@@ -1,7 +1,7 @@
 # acode_diagram_example
 自定义折线图(动画+滑动监听)
 ## 效果图 ##
-![效果图](http://ohdryj9ow.bkt.clouddn.com/diagramline.gif)
+![效果图](http://oif1jvh5f.bkt.clouddn.com/acode_linechare.gif)
 
 ## 使用方法 ##
 ### xml ###

@@ -102,6 +102,9 @@ public class DiagramView extends RelativeLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (diagramLineView == null || diagramLineView.getData() == null || diagramLineView.getData().size() == 0) {
+            return true;
+        }
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 lastTouchX = event.getX();
@@ -166,6 +169,16 @@ public class DiagramView extends RelativeLayout {
     //设置点点颜色 fillColor填充颜色
     public void setFillColor(int fillColor) {
         diagramLineView.setFillColor(fillColor);
+    }
+
+    //刷新数据
+    public void notifyData() {
+        diagramLineView.notifyData();
+    }
+
+    //设置Y轴的每个点的间隔
+    public void setYInterval(int yInterval) {
+        diagramLineView.setYInterval(yInterval);
     }
 
     //滑动监听
