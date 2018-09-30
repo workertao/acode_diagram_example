@@ -46,18 +46,19 @@ public class MainActivity extends AppCompatActivity {
 
         //滑动折线图
         diagramView = (DiagramView) findViewById(R.id.diagramView);
-        diagramView.setOnMoveListener(new OnMoveListener() {
-            @Override
-            public void onMoved(int index) {
-                btn1.setText("滑动折线图:" + getData().get(index).getStrdx() + "/" + getData().get(index).getDy());
-            }
-        });
         diagramView.setXLength(7);
         diagramView.setYLength(5);
         diagramView.setYInterval(100);
         diagramView.setIsAnim(false);
         diagramView.setStokeColor(R.color.cd54d);
         diagramView.setData(getData());
+        diagramView.setOnMoveListener(new OnMoveListener() {
+            @Override
+            public void onMoved(int index) {
+                btn1.setText("滑动折线图:" + getData().get(index).getStrdx() + "/" + getData().get(index).getDy());
+            }
+        });
+
 
 
         //滚动折线图
